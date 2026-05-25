@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Video Activity Detection — Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #e74c3c;
+    }
+
+    .header h1 { font-size: 20px; color: #fff; letter-spacing: 1px; }
+    .header h1 span { color: #e74c3c; }
+
+    .live-badge {
+      background: #e74c3c;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    /* ── DATE FILTER BAR ── */
+    .date-bar {
+      background: #16213e;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid #2a2d3e;
+      flex-wrap: wrap;
+    }
+
+    .date-bar label {
+      font-size: 14px;
+      color: #aaa;
+      white-space: nowrap;
+    }
+
+    .date-bar select,
+    .date-bar input[type="date"] {
+      background: #0f1117;
+      color: #e0e0e0;
+      border: 1px solid #2a2d3e;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .date-bar select:focus,
+    .date-bar input[type="date"]:focus {
+      border-color: #e74c3c;
+    }
+
+    .date-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .date-btn:hover { background: #c0392b; }
+
+    .date-btn.today {
+      background: #27ae60;
+    }
+
+    .date-btn.today:hover { background: #219a52; }
+
+    .viewing-label {
+      font-size: 13px;
+      color: #e74c3c;
+      font-weight: bold;
+      margin-left: auto;
+    }
+
+    /* ── STATS CARDS ── */
+    .stats-section { padding: 24px 40px 10px; }
+
+    .stats-section h2 {
+      font-size: 14px;
+      color: #aaa;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .stat-card {
+      background: #1e2130;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      border: 1px solid #2a2d3e;
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover  { transform: translateY(-3px); }
+    .stat-card .icon  { font-size: 28px; margin-bottom: 6px; }
+    .stat-card .count { font-size: 32px; font-weight: bold; color: #e74c3c; }
+    .stat-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+    .stat-card.total  { border-color: #e74c3c; }
+    .stat-card.total .count { color: #fff; }
+
+    /* ── MAIN CONTENT ── */
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 20px 40px 40px;
+    }
+
+    @media (max-width: 900px) {
+      .content { grid-template-columns: 1fr; }
+      .date-bar { padding: 14px 20px; }
+      .stats-section { padding: 20px 20px 10px; }
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: #1e2130;
+      border-radius: 14px;
+      border: 1px solid #2a2d3e;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      background: #16213e;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2a2d3e;
+    }
+
+    .panel-header .sub {
+      font-size: 11px;
+      color: #666;
+      font-weight: normal;
+    }
+
+    /* ── ALERT LIST ── */
+    .alert-list {
+      max-height: 440px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #12151f;
+      border-left: 4px solid #e74c3c;
+      transition: background 0.2s;
+    }
+
+    .alert-item:hover { background: #1a1d2e; }
+
+    .threat-badge {
+      color: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      min-width: 85px;
+      text-align: center;
+    }
+
+    .threat-badge.gun       { background: #c0392b; }
+    .threat-badge.knife     { background: #e74c3c; }
+    .threat-badge.alcohol   { background: #d35400; }
+    .threat-badge.smoking   { background: #7f8c8d; }
+    .threat-badge.cigarette { background: #7f8c8d; }
+    .threat-badge.grenade   { background: #8e44ad; }
+    .threat-badge.violence  { background: #922b21; }
+
+    .alert-info          { flex: 1; }
+    .alert-info .time    { font-size: 12px; color: #888; }
+    .alert-info .conf    { font-size: 13px; color: #aaa; }
+    .alert-info .source  {
+      font-size: 11px; color: #555;
+      background: #1e2130;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 3px;
+    }
+
+    .conf-bar      { width: 60px; height: 6px; background: #2a2d3e; border-radius: 3px; overflow: hidden; }
+    .conf-bar-fill { height: 100%; background: #e74c3c; border-radius: 3px; }
+
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .no-data .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* ── SNAPSHOTS ── */
+    .snapshots-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 14px;
+      max-height: 440px;
+      overflow-y: auto;
+    }
+
+    .snapshot-item {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #12151f;
+      cursor: pointer;
+      border: 1px solid #2a2d3e;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .snapshot-item:hover { transform: scale(1.03); border-color: #e74c3c; }
+
+    .snapshot-item img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .snap-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.75);
+      font-size: 10px;
+      color: #ddd;
+      padding: 4px 6px;
+      text-align: center;
+    }
+
+    .no-snapshots {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    /* ── MODAL ── */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active    { display: flex; }
+    .modal img       { max-width: 90vw; max-height: 85vh; border-radius: 10px; border: 2px solid #e74c3c; }
+    .modal-close     { position: absolute; top: 20px; right: 30px; font-size: 36px; color: white; cursor: pointer; }
+    .modal-filename  { position: absolute; bottom: 30px; color: #aaa; font-size: 13px; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar       { width: 6px; }
+    ::-webkit-scrollbar-track { background: #12151f; }
+    ::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #e74c3c; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      padding: 16px;
+      color: #444;
+      font-size: 12px;
+      border-top: 1px solid #1e2130;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <h1>🎥 Smart Video Activity <span>Detection</span> — Dashboard</h1>
+  
+</div>
+
+<!-- ── DATE FILTER BAR ── -->
+<div class="date-bar">
+  <label>📅 Select Date:</label>
+
+  <!-- Dropdown of available report dates -->
+  <select id="date-select" onchange="onDateSelectChange()">
+    <option value="">-- Select from available reports --</option>
+  </select>
+
+  <!-- OR manual date picker -->
+  <label>or pick:</label>
+  <input type="date" id="date-picker"
+         value=""
+         onchange="onDatePickerChange()"/>
+
+  <!-- Buttons -->
+  <button class="date-btn today" onclick="loadToday()">📅 Today</button>
+  <button class="date-btn" onclick="loadSelectedDate()">🔍 View Report</button>
+
+  <!-- Currently viewing label -->
+  <span class="viewing-label" id="viewing-label">Viewing: Today</span>
+</div>
+
+<!-- ── STATS ── -->
+<div class="stats-section">
+  <h2 id="stats-heading">Today's Detection Summary</h2>
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card total">
+      <div class="icon">🚨</div>
+      <div class="count" id="total-count">0</div>
+      <div class="label">Total Alerts</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="content">
+
+  <!-- Alert Log -->
+  <div class="panel">
+    <div class="panel-header">
+      🔔 Alert Log
+      <span class="sub" id="refresh-time">Auto-refreshes every 5s</span>
+    </div>
+    <div class="alert-list" id="alert-list">
+      <div class="no-data">
+        <div class="icon">✅</div>
+        No threats detected.
+      </div>
+    </div>
+  </div>
+
+  <!-- Snapshots -->
+  <div class="panel">
+    <div class="panel-header">
+      📸 Detection Snapshots
+      <span class="sub">Latest 12 for selected date</span>
+    </div>
+    <div class="snapshots-grid" id="snapshots-grid">
+      <div class="no-snapshots">
+        <div>📷</div>No snapshots yet.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<div class="footer">
+  Smart Video Activity Detection System &nbsp;|&nbsp;
+  D Y Patil International University &nbsp;|&nbsp;
+   &nbsp;|&nbsp;
+  Guide: 
+</div>
+
+<!-- ── MODAL ── -->
+<div class="modal" id="modal" onclick="closeModal()">
+  <span class="modal-close">✕</span>
+  <img id="modal-img" src="" alt="Snapshot"/>
+  <div class="modal-filename" id="modal-filename"></div>
+</div>
+
+<script>
+  // ── State ─────────────────────────────────────────────────────────────────
+  let currentDate = new Date().toISOString().split('T')[0]; // today YYYY-MM-DD
+
+  const icons = {
+    'GUN':'🔫','KNIFE':'🔪','ALCOHOL':'🍺',
+    'SMOKING':'🚬','CIGARETTE':'🚬','GRENADE':'💣','VIOLENCE':'⚠️'
+  };
+
+  function getBadgeClass(cls) {
+    const map = {
+      'GUN':'gun','KNIFE':'knife','ALCOHOL':'alcohol',
+      'SMOKING':'smoking','CIGARETTE':'cigarette',
+      'GRENADE':'grenade','VIOLENCE':'violence'
+    };
+    return map[cls] || '';
+  }
+
+  // ── Load available dates into dropdown ────────────────────────────────────
+  async function loadAvailableDates() {
+    try {
+      const res  = await fetch('/api/dates');
+      const data = await res.json();
+      const sel  = document.getElementById('date-select');
+
+      sel.innerHTML = '<option value="">-- Available Reports --</option>';
+      data.dates.forEach(d => {
+        const opt      = document.createElement('option');
+        opt.value      = d;
+        opt.textContent = d === currentDate ? `${d} (Today)` : d;
+        if (d === currentDate) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    } catch(e) {
+      console.error('Date load error:', e);
+    }
+  }
+
+  // ── Date change handlers ──────────────────────────────────────────────────
+  function onDateSelectChange() {
+    const val = document.getElementById('date-select').value;
+    if (val) {
+      currentDate = val;
+      document.getElementById('date-picker').value = val;
+      loadData();
+    }
+  }
+
+  function onDatePickerChange() {
+    const val = document.getElementById('date-picker').value;
+    if (val) {
+      currentDate = val;
+      document.getElementById('date-select').value = val;
+      loadData();
+    }
+  }
+
+  function loadToday() {
+    currentDate = new Date().toISOString().split('T')[0];
+    document.getElementById('date-picker').value  = currentDate;
+    document.getElementById('date-select').value  = currentDate;
+    loadData();
+  }
+
+  function loadSelectedDate() {
+    const picker = document.getElementById('date-picker').value;
+    const select = document.getElementById('date-select').value;
+    currentDate  = picker || select || currentDate;
+    loadData();
+  }
+
+  // ── Fetch alerts for selected date ───────────────────────────────────────
+  async function fetchAlerts() {
+    try {
+      const res  = await fetch(`/api/alerts?date=${currentDate}`);
+      const data = await res.json();
+
+      // Update viewing label
+      const isToday = currentDate === new Date().toISOString().split('T')[0];
+      document.getElementById('viewing-label').textContent =
+        isToday ? `Viewing: Today (${currentDate})` : `Viewing: ${currentDate}`;
+      document.getElementById('stats-heading').textContent =
+        isToday ? "Today's Detection Summary" : `Detection Summary — ${currentDate}`;
+
+      // Stats cards
+      const grid  = document.getElementById('stats-grid');
+      let   html  = `
+        <div class="stat-card total">
+          <div class="icon">🚨</div>
+          <div class="count">${data.alerts.length}</div>
+          <div class="label">Total Alerts</div>
+        </div>`;
+
+      for (const [cls, count] of Object.entries(data.stats)) {
+        html += `
+          <div class="stat-card">
+            <div class="icon">${icons[cls] || '⚠️'}</div>
+            <div class="count">${count}</div>
+            <div class="label">${cls}</div>
+          </div>`;
+      }
+      grid.innerHTML = html;
+
+      // Alert list
+      const list = document.getElementById('alert-list');
+      if (data.alerts.length === 0) {
+        list.innerHTML = `
+          <div class="no-data">
+            <div class="icon">📭</div>
+            No detections found for ${currentDate}.
+          </div>`;
+      } else {
+        list.innerHTML = data.alerts.map(a => {
+          const conf     = parseFloat(a['Confidence'] || 0);
+          const barW     = Math.round(conf * 100);
+          const cls      = (a['Threat Class'] || '').toUpperCase();
+          const badgeCls = getBadgeClass(cls);
+          return `
+            <div class="alert-item">
+              <span class="threat-badge ${badgeCls}">${cls}</span>
+              <div class="alert-info">
+                <div class="time">📅 ${a['Date']}  🕐 ${a['Time']}</div>
+                <div class="conf">Confidence: ${(conf * 100).toFixed(0)}%</div>
+                <span class="source">${a['Source'] || 'VIDEO'}</span>
+              </div>
+              <div>
+                <div class="conf-bar">
+                  <div class="conf-bar-fill" style="width:${barW}%"></div>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      // Refresh time (only show for today)
+      if (isToday) {
+        const now = new Date();
+        document.getElementById('refresh-time').textContent =
+          `Last updated: ${now.toLocaleTimeString()}`;
+      } else {
+        document.getElementById('refresh-time').textContent =
+          `Historical report — ${currentDate}`;
+      }
+
+    } catch(e) {
+      console.error('Alert fetch error:', e);
+    }
+  }
+
+  // ── Fetch snapshots for selected date ─────────────────────────────────────
+  async function fetchSnapshots() {
+    try {
+      const res  = await fetch(`/api/snapshots?date=${currentDate}`);
+      const data = await res.json();
+      const grid = document.getElementById('snapshots-grid');
+
+      if (data.snapshots.length === 0) {
+        grid.innerHTML = `
+          <div class="no-snapshots">
+            <div>📷</div>
+            No snapshots for ${currentDate}.
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = data.snapshots.map(f => {
+        const label = f.split('_')[0].toUpperCase();
+        const parts = f.replace('.jpg','').split('_');
+        const tStr  = parts.length >= 4
+          ? `${parts[1]} ${parts[2].replace(/-/g,':')}`
+          : '';
+        return `
+          <div class="snapshot-item"
+               onclick="openModal('/snapshots/${f}', '${f}'); event.stopPropagation();">
+            <img src="/snapshots/${f}" alt="${label}" loading="lazy"/>
+            <div class="snap-label">${label} · ${tStr}</div>
+          </div>`;
+      }).join('');
+
+    } catch(e) {
+      console.error('Snapshot fetch error:', e);
+    }
+  }
+
+  // ── Load both panels ──────────────────────────────────────────────────────
+  function loadData() {
+    fetchAlerts();
+    fetchSnapshots();
+    loadAvailableDates();  // refresh dropdown in case new date appeared
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────────────
+  function openModal(src, filename) {
+    document.getElementById('modal-img').src             = src;
+    document.getElementById('modal-filename').textContent = filename;
+    document.getElementById('modal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  document.getElementById('date-picker').value = currentDate;
+
+  loadAvailableDates();
+  loadData();
+
+  // Auto refresh every 5 seconds — only refreshes alerts/snapshots
+  // not the date dropdown (that refreshes on loadData call)
+  setInterval(() => {
+    const isToday = currentDate === new Date().toISOString().split('T')[0];
+    if (isToday) loadData();  // only auto-refresh if viewing today
+  }, 5000);
+</script>
+</body>
+</html>
