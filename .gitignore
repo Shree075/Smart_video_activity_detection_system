@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+env/
+yolo_env/
+
+# Data and generated output
+dataset/
+datasets/
+runs/
+reports/
+snapshots/
+activity/
+detection/
+system/
+video/
+web/
+Year/
+Project/
+
+# Model files
+*.pt
+*.pth
+*.h5
+*.ckpt
+*.onnx
+*.pb
+*.weights
+
+# Video/media
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

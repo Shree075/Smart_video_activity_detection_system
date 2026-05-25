@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Alert Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e272e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #ff4d4d;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            color: black;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background: #ff4d4d;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Surveillance Alert Dashboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Threat</th>
+                <th>Confidence</th>
+                <th>Source</th>
+            </tr>
+        </thead>
+        <tbody id="alert-body">
+            {% for alert in alerts %}
+            <tr>
+                <td>{{ alert.time }}</td>
+                <td>{{ alert.class_name }}</td>
+                <td>{{ alert.confidence }}</td>
+                <td>{{ alert.source }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        async function refreshAlerts() {
+            const response = await fetch('/api/alerts');
+            const alerts = await response.json();
+            const tbody = document.getElementById('alert-body');
+            tbody.innerHTML = '';
+            alerts.forEach(alert => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${alert.time}</td>
+                        <td>${alert.class_name}</td>
+                        <td>${alert.confidence}</td>
+                        <td>${alert.source}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        setInterval(refreshAlerts, 3000);
+    </script>
+</body>
+</html>
