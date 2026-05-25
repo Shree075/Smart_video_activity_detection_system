@@ -1,4 +1,4 @@
-#Smart_video_activity_detection_system
+# Smart_video_activity_detection_system
 
 read the project documentation file carefully to fully run this project. for the dataset drive link is given, download the folder as it is and save it in the Smart_video_activity_detection_system folder
 
