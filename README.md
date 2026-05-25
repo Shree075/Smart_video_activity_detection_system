@@ -7,4 +7,5 @@ Also change the paths in all the files ,according to your project file path. all
 to run the main gui of the project , run the gui_app.py file in the scripts folder. just remember to activate the environment first.
 
 Project documentation : https://docs.google.com/document/d/1PI0bzKars5E_kayq7Py-OYKIfNM6Rft_yrwFufrp9uE/edit?usp=sharing
+
 dataset : https://drive.google.com/drive/folders/1zuRZKuHXfpUz8w8F-7UINNH0sQwAs7pH?usp=sharing
